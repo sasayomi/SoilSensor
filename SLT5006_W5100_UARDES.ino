@@ -1,28 +1,26 @@
-UECS対応版
-
 //Sample Cord Ver1.5
 /*
-配列
-ソフトウェアシリアル
-サブルーチン
-受信待機設定
-サブルーチン配列入力
-テーブル表示化
-while構文
-LCD表示
-UECS対応
-*/
-
-
-/*
 チェックポイント
+(0)当サンプルコードの開発環境
+機種
+Arduino UNO
+Ethernet Shield R3(W5100)
+開発環境
+Arduino IDE 2.2.1
 (1)センサ
 品番：SLT5006(UART)
-接続を確認する
-(2)LCD使用する場合
-配線の確認する
-(3)UECS使用する場合
-UARDECS導入済みか？
+(2)接続を確認する
+////////////////////////////////////////////////////////////
+//Sensor ->Arduino Pin connection
+//RED&White  -->5V
+//Black      -->GND
+//Blue      TxD -->D2(->RX)
+//Yellow    RxD -->D3(<-TX)
+//Baud rate =9600
+////////////////////////////////////////////////////////////
+(3)UARDECS導入する
+参考：https://uecs.org/arduino/uardecs.html
+当サンプルコードではArduino UNO　＋　Ethernet Shield R3(W5100)を使用しています。
 ◎Ethernet Shield R3またはW5100を搭載した互換シールドを使う場合
 　"W5100(旧機種用)"フォルダにファイルが入っています
 　"libraries"の中に入っている"UARDECS"と"UARDECS_MEGA"フォルダをコピーします。
@@ -31,8 +29,10 @@ UARDECS導入済みか？
 　③ライブラリマネージャという画面が出るので、タイプに「全て」、検索欄にethernetと入力するとEthernet Built-IN by Various・・・というライブラリが出てくるのでバージョンが2.0.0であることを確認します。
 　④IDE1.8.7ではバージョン2.0.0が最初からインストールされています。もし、他のバージョンが検出された場合、バージョンを選択→バージョン2.0.0を選んでインストールして下さい。
 　⑤次に、再びマイドキュメント/Arduino/librariesフォルダに入ります。先程コピーしたEthernetフォルダを開き、その下のsrcフォルダに入ると"socket.cpp"があります。UARDECSの"W5100用Ethernetパッチ(不具合対応)"フォルダにある、Ver2.0.0用の"socket.cpp"で上書きします。
-受け手側IPアドレスは192.168.1.1か？
-確認画面は192168.1.7か？
+◎IPアドレスの設定
+受け手側IPアドレスは192.168.1.1に設定していますか？
+サブネットマスクは255.255.255.0に設定してますか？
+ブラウザの確認画面は192.168.1.7を参照していますか？
 */
 ////////////////////////////////////////////////////////////
 //(1)センサ接続
@@ -46,31 +46,7 @@ UARDECS導入済みか？
 #include <SoftwareSerial.h>
 SoftwareSerial mySerial(2,3);
 
-
-
 ////////////////////////////////////////////////////////////
-//(2)LCD使用する場合
-// LCD(1602) ←→ Arduinoのピンの割り当て
-//vss -> GND
-//vdd -> 5V
-//V0 -> GND
-// rs      →   D4
-// rw      →   GND
-// enable  →   D6
-// d4      →   D10
-// d5      →   D11
-// d6      →   D12
-// d7      →   D13
-//A -> 5V
-//K -> GND
-#include <LiquidCrystal.h>
-LiquidCrystal lcd(4, 6, 10, 11, 12, 13);
-
-////////////////////////////////////////////////////////////
-
-//UECS関連
-////////////////////////////////////////////////////////////
-//(3)UECS使用する場合
 #include <SPI.h>
 //#include <Ethernet.h> //Arduino IDE Ver1.7.2以降でW5500搭載機種
 #include <Ethernet.h> //Ver1.7.2以降でW5100搭載機種
@@ -184,9 +160,8 @@ U_ccmList[CCMID_VWCC].value=VWCC3;
  Serial.print(VWCC3); Serial.println(","); 
 }
 
-
 ////////////////////////////////////////////////////////////
-/*
+/*　UARDECSより引用
 CCMへのアクセス方法
 各CCMの状態はU_ccmList[CCMID]という構造体に格納されています
 受信に設定したCCMの値は受信すると自動更新されます
@@ -310,16 +285,6 @@ if(flag==1){//測定値取り出すときの処理
  Serial.print(VWCR2); Serial.print(","); 
  Serial.print(VWCC2); Serial.println(","); 
 //*/
-
-/*LCD使用時はコメント解除
- lcd.clear();               // LCD画面をクリア 
- lcd.setCursor(0, 0);       // カーソルの位置を指定(0桁0行の位置)
- lcd.print(temp2);lcd.print("C,");
- lcd.print(bulk2);lcd.print("dS/m,"); 
- lcd.setCursor(0, 1);       // カーソルの位置を指定(0桁1行目の位置)
- lcd.print(VWC2);lcd.print("%,"); 
- lcd.print(pore2);lcd.print("dS/m,"); 
-*/
 }
 }
 
@@ -364,18 +329,6 @@ void setup() {
   Serial.print("EC PORE [dS/m]"); 
   Serial.print("VWC-ROCK [%],");
   Serial.println("VWC-COCO [%],");
-
-/*LCD使用時はコメント解除
-  lcd.noDisplay();
-  lcd.begin(16, 2);          // LCDの桁数と行数を指定する(16桁2行)
-  lcd.clear();               // LCD画面をクリア
- 
-  lcd.setCursor(0, 0);       // カーソルの位置を指定(0桁0行の位置)
-  lcd.print("Soil Sensor");       // 文字の表示
- 
-  lcd.setCursor(0, 1);       // カーソルの位置を指定(0桁1行目の位置)
-  lcd.print("Arduino Uno");  // 文字の表示
-*/
 
 UECSsetup();//UECS不使用時はコメントアウト
   }
