@@ -1,5 +1,3 @@
-//Sample Cord Ver1.5
-
 チェックポイント
 品番：SLT5006(UART)
 接続を確認する
