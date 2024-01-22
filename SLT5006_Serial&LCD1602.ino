@@ -4,9 +4,7 @@ Red&white -->5V
 Black--> GND
 Blue -->D2
 Yellow-->D3
-*/
 
-/*
 LCD 16X2 -->ARDUINO
 VSS --> GND
 VDD -->5V
@@ -181,8 +179,8 @@ void program(){
   receive2(21);//受信バイト数21
 }
 void setup() {
-  Serial.begin(9600);         // 標準のシリアル通信初期化（初期値はG3（RX）,G1（TX））
-  mySerial.begin(9600);        // シリアル通信2初期化 (初期値は G16（RX）, G17（TX）)
+  Serial.begin(9600);         // 標準のシリアル通信初期化
+  mySerial.begin(9600);        // シリアル通信2初期化 
     //LCD表示
   lcd.begin( 16, 2 );
   lcd.clear();
