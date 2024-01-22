@@ -2,11 +2,18 @@
 /*
 チェックポイント
 (0)当サンプルコードの開発環境
+目的
+土壌センサの測定値をLANを通じてUECS形式で出力する
+
 機種
+SLT5006
 Arduino UNO
 Ethernet Shield R3(W5100)
-開発環境
+
+ソフトウェア
 Arduino IDE 2.2.1
+UARDECS(W5100用)
+
 (1)センサ
 品番：SLT5006(UART)
 (2)接続を確認する
