@@ -18,6 +18,8 @@ DB4-->D10
 DB5-->D11
 DB6-->D12
 DB7-->D13
+A-->5V
+K-->GND
 */
 
 #include <SoftwareSerial.h>
