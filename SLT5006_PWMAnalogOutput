@@ -128,16 +128,16 @@ void display(int flag2,float temp2,float bulk2,float VWC2,float pore2,float VWCR
   Serial.print(pore2); Serial.print(""); 
   Serial.print(VWCR2); Serial.print(","); 
   Serial.print(VWCC2); Serial.println(","); 
-/*作成中
-  temp3 = temp2;//50*V-20
-  VWC3 = VWC2;//100*V
-  bulk3 = bulk2;//100*V
-  pore3 = pore2;//100*v
+
+  temp3 =(int)((temp2+20)/80*255);//80*V-20 計測範囲-20-60℃
+  VWC3 = (int)(VWC2/100*255);//100*V　計測範囲0-60%
+  bulk3 =(int)(bulk2/5*255);//5*V 計測範囲　0－5dS/m
+  pore3 =(int)(pore2/5*255);//5*V
   analogWrite(analogout_TEMP,temp3);  
   analogWrite(analogout_VWC,VWC3);  
   analogWrite(analogout_bulk,bulk3);  
   analogWrite(analogout_pore,pore3);  
-*/
+
  }
 }
 
