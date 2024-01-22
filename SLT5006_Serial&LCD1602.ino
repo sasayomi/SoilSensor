@@ -22,131 +22,156 @@ A-->5V
 K-->GND
 */
 
-#include <SoftwareSerial.h>
+#include <SoftwareSerial.h> //EspSoftwareSerial必要
 SoftwareSerial mySerial(2,3);
 #include <LiquidCrystal.h>
 LiquidCrystal lcd( 4, 6, 10, 11, 12, 13 );
 
-char flag;
-char size;//valnw
+int flag;
+int size;
 
-void writecom(int size, int value[]){
+void writecom(int size, int value[]){//センサ送信
 for (int i=0;i<size;i++){
-mySerial.write(value[i]);
- Serial.print(value[i],HEX);
-}
- Serial.println("write");
+ mySerial.write(value[i]);
 }
 
-void recieve(int valn){
+while (mySerial.available()>0){
+ char t = mySerial.read();
+}
+  Serial.print("From Arduino:");Serial.print(" ");
+for (int i=0;i<size;i++){
+ Serial.print(value[i],HEX);Serial.print(" "); 
+}
+Serial.print(flag);  Serial.println("send");
+}
+
+void receive(int valn){//センサ受信
 int val[valn]={0};
 if(mySerial.available()>0){
 for (int i=0; i<valn;i++){
- val[i]=mySerial.read();
- Serial.print(val[i],HEX);
+  val[i]=mySerial.read();
 }
- Serial.println("read");
 }
 while (mySerial.available()>0){
  char t = mySerial.read();
 }
+Serial.print(flag);Serial.print("fromsensor");
+for (int i=0;i<valn;i++){
+ Serial.print(val[i],HEX);;Serial.print(" "); 
+}
+Serial.print(flag);Serial.println("receive");
+if((val[1]==8)&&(val[3]==1)){
+  flag=1;
+ Serial.println("read/measured");
+  for (int i=0; i<valn;i++){
+    Serial.print(val[i],HEX);Serial.print(" ");
+     }
+  }else{
+      Serial.println("readonly");
+         }
+}
+
+void receive2(int valn){
+  valn=21;
+int val[valn]={0};
+if(mySerial.available()>0){
+for (int i=0; i<valn;i++){
+  val[i]=mySerial.read();
+}
+}
+while (mySerial.available()>0){
+ char t = mySerial.read();
+}
+Serial.print(flag);Serial.print("fromsensor");
+for (int i=0;i<valn;i++){
+ Serial.print(val[i],HEX);;Serial.print(" "); 
+}
+Serial.print(flag);Serial.println("receive");
 
 if((val[1]==8)&&(val[3]==1)){
- flag=1;
- }
- int tempint;
- float temp;
- float bulk;
- float VWC;
- float pore;
+  flag=1;
+ Serial.println("read/measured");
+  for (int i=0; i<valn;i++){
+    Serial.print(val[i],HEX);Serial.print(" ");
+     }
+  }else{
+      Serial.println("readonly");
+         }
+float temp=0;
+float bulk=0;
+float VWC=0;
+float VWCR=0;
+float VWCC=0;
+float pore=0;
+temp=(val[3]+val[4]*256)*0.0625;
+bulk=(val[5]+val[6]*256)*0.001;
+VWC=(val[9]+val[10]*256)*0.1;
+VWCR=(val[7]+val[8]*256)*0.1;
+VWCC=(val[11]+val[12]*256)*0.1;
+pore=(val[15]+val[16]*256)*0.001;
+display(flag,temp,bulk,VWC,pore,VWCR,VWCC);
 
-if(val[1]==0X13){
- temp=(val[3]+val[4]*256)*0.0625;
- bulk=(val[5]+val[6]*256)*0.001;
- VWC=(val[9]+val[10]*256)*0.1;
- pore=(val[15]+val[16]*256)*0.001;
- Serial.print(",");Serial.print(temp);
- Serial.print(",");Serial.print(bulk);
- Serial.print(",");Serial.print(VWC);
- Serial.print(",");Serial.print(pore);Serial.println(",");
+}
+
+void display(int flag2,float temp2,float bulk2,float VWC2,float pore2,float VWCR2,float VWCC2){
+ if(flag2==1) {
+  Serial.print(flag);Serial.println("display");
+  Serial.print(",");Serial.print(temp2);
+  Serial.print(",");Serial.print(bulk2);
+  Serial.print(",");Serial.print(VWC2);
+  Serial.print(",");Serial.print(pore2);Serial.println(",");
+
  lcd.clear();
  lcd.setCursor(0, 0);
- lcd.print(temp);lcd.print("deg");
+ lcd.print(temp2);lcd.print("deg");
  lcd.setCursor(8, 0);
- lcd.print(bulk);lcd.print("dS/m");
+ lcd.print(bulk2);lcd.print("dS/m");
  lcd.setCursor(0, 1);
- lcd.print(VWC);lcd.print("%");
+ lcd.print(VWC2);lcd.print("%");
  lcd.setCursor(8, 1);
- lcd.print(pore);lcd.print("dS/m");
+ lcd.print(pore2);lcd.print("dS/m");
  }
-
-return flag;
-
 }
 
+void program(){
+  //測定開始
+  Serial.print("Start sensor");
+  int  value[]={0X02,0X07,0X01,0X01,0X0D,0X70};
+  writecom(6,value);
+  delay(100);
+  receive(6);//受信バイト数6
+
+ //測定完了ステータス読み出し
+  flag=0;
+ while(flag==0){
+  Serial.print("Read status");
+  int value1[]={0X01,0X08,0X01,0X00,0XE6,0X00};
+  writecom(5,value1);
+  delay(100);
+  receive(6);//受信バイト数6
+  delay(500);//測定完了ステータス確認サイクル
+   }
+
+//測定データ読み出し
+ int value2[]={0X01,0X13,0X10,0XFC,0X2C,0X00};
+  writecom(5,value2);
+  delay(100);
+  receive2(21);//受信バイト数21
+}
 void setup() {
-
-  // put your setup code here, to run once:
-
-Serial.begin(9600);
-
-mySerial.begin(9600);
-
-Serial.println("Soil Sensor");
-
-Serial.println("--------------------------------------");
-
-Serial.print("Temp [degC],");
-
-Serial.print("EC BULK [dS/m],");
-
-Serial.print("VWC [%],");
-
-Serial.println("EC PORE [dS/m");
-
- lcd.begin( 16, 2 );
-
- lcd.clear();
-
- lcd.setCursor(0, 0);
-
- lcd.print("Soil Sensor");
-
-
+  Serial.begin(9600);         // 標準のシリアル通信初期化（初期値はG3（RX）,G1（TX））
+  mySerial.begin(9600);        // シリアル通信2初期化 (初期値は G16（RX）, G17（TX）)
+    //LCD表示
+  lcd.begin( 16, 2 );
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Soil Sensor");
 
 }
+
 
 void loop() {
-
-  // put your main code here, to run repeatedly
-
-size=6;
-
-int value[]={0X02,0X07,0X01,0X01,0X0D,0X70};
-
-writecom(size,value);
-
-recieve(6);
-
-flag=0;
-
-while(flag==0){
-
- size=5;
-
- int value1[]={0X01,0X08,0X01,0X00,0XE6,0X00};
-
- writecom(size,value1);
-
- delay(100);
-
- recieve(6);
-
-}
-
-size=5;
-int value2[]={0X01,0X13,0X10,0XFC,0X2C,0X00};
-writecom(size,value2);
-recieve(21);
-delay(5000);
+program();
+int interval=3000;
+delay(interval);//測定間隔(ms)
 }
