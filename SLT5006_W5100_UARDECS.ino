@@ -133,7 +133,7 @@ void UserEveryMinute(){//毎分の動作
 float num=0;
 Serial.println("minute");
 for (int i = 1; i < 2; i++){
-  program();
+program();
 // Serial.print("count");Serial.println(i);//debug用
 }
 }
@@ -157,7 +157,7 @@ U_ccmList[CCMID_ECbulk].value=bulk3;
 U_ccmList[CCMID_ECpore].value=pore3;
 U_ccmList[CCMID_VWCR].value=VWCR3;
 U_ccmList[CCMID_VWCC].value=VWCC3;
-//デバック用
+/*デバック用
  Serial.print("CCMvalue,"); 
  Serial.print(temp3); Serial.print(",");
  Serial.print(bulk3); Serial.print(","); 
@@ -165,6 +165,7 @@ U_ccmList[CCMID_VWCC].value=VWCC3;
  Serial.print(pore3); Serial.print(""); 
  Serial.print(VWCR3); Serial.print(","); 
  Serial.print(VWCC3); Serial.println(","); 
+*/
 }
 
 ////////////////////////////////////////////////////////////
@@ -202,62 +203,87 @@ floatなどから変換する場合、10倍して整数にする処理が必要�
 */
 ///////////////////////////////////////////////////////////
 
-int flag=0;
-int size=0;
+int flag;
+int size;
 
 //センサへの送信
 void writecom(int size,int value[]){
-
   for (int i=0; i<size;i++){
   mySerial.write(value[i]);
   }
-    while (mySerial.available() > 0) {//受信バッファクリア
-     char t = mySerial.read();
+  while (mySerial.available() > 0) {//受信バッファクリア
+    char t = mySerial.read();
   }
-///*debug send to sensor
+/*デバッグ用
   Serial.print("From Arduino:");Serial.print(" ");
   for (int i=0; i<size;i++){
     Serial.print(value[i],HEX);Serial.print(" "); 
   }
   Serial.println("send");
-//*/
-
+*/
 }
 
 // センサからの読み出し
-void receive(int valn){
-
- int val[valn] ={0};
-
+void receive(int valn){//センサ受信
+  int val[valn]={0};
   if(mySerial.available()>0){
-  for (int i=0; i<valn;i++){
-  val[i]=mySerial.read();
+    for (int i=0; i<valn;i++){
+      val[i]=mySerial.read();
+    }
   }
+  while (mySerial.available()>0){
+    char t = mySerial.read();
   }
-
-  while (mySerial.available() > 0) {//受信バッファクリア
-     char t = mySerial.read();
+/*デバッグ用
+  Serial.print(flag);Serial.print("fromsensor");
+  for (int i=0;i<valn;i++){
+    Serial.print(val[i],HEX);;Serial.print(" "); 
   }
-///*debug Recieve from sensor
-  for (int i=0; i<valn;i++){
-    Serial.print(val[i],HEX);Serial.print(" "); 
+  Serial.print(flag);Serial.println("receive");
+  */
+  if((val[1]==8)&&(val[3]==1)){
+    flag=1;
+    /*デバッグ用
+    Serial.println("read/measured");
+    for (int i=0; i<valn;i++){
+      Serial.print(val[i],HEX);Serial.print(" ");
+     }
+  }else{
+  Serial.println("readonly");
+  */
   }
-//*/
-
-
-//測定判定
-if((val[1]==8)&&(val[3]==1)){
- Serial.println("Read/Measured");
- flag=1;//測定は完了した
-///*debug Recieve from sensor
-  for (int i=0; i<valn;i++){
-    Serial.print(val[i],HEX);Serial.print(" "); 
-  }
-//*/
-
-} else {
-Serial.println("Read");
 }
+
+void receive2(int valn){
+  valn=21;
+  int val[valn]={0};
+  if(mySerial.available()>0){
+    for (int i=0; i<valn;i++){
+      val[i]=mySerial.read();
+    }
+  }
+  while (mySerial.available()>0){
+    char t = mySerial.read();
+  }
+/*デバッグ用
+  Serial.print(flag);Serial.print("fromsensor");
+  for (int i=0;i<valn;i++){
+    Serial.print(val[i],HEX);;Serial.print(" "); 
+  }
+  Serial.print(flag);Serial.print("receive");
+  */
+  Serial.println();
+  if((val[1]==8)&&(val[3]==1)){
+    flag=1;
+    /*デバッグ用
+    Serial.println("read/measured");
+    for (int i=0; i<valn;i++){
+      Serial.print(val[i],HEX);Serial.print(" ");
+     }
+  }else{
+      Serial.println("readonly");
+      */
+  }
 //換算
 float temp=0;
 float bulk=0;
@@ -271,13 +297,13 @@ VWC=(val[9]+val[10]*256)*0.1;
 VWCR=(val[7]+val[8]*256)*0.1;
 VWCC=(val[11]+val[12]*256)*0.1;
 pore=(val[15]+val[16]*256)*0.001;
- sendvalue(temp,bulk,VWC,pore,VWCR,VWCC);
- sendUECS(temp,bulk,VWC,pore,VWCR,VWCC);
+sendvalue(flag,temp,bulk,VWC,pore,VWCR,VWCC);
+sendUECS(temp,bulk,VWC,pore,VWCR,VWCC);
 }
 
-void sendvalue(float temp2,float bulk2,float VWC2,float pore2,float VWCR2,float VWCC2){
-if(flag==1){//測定値取り出すときの処理
-///*シリアルモニタ表示
+void sendvalue(int flag2,float temp2,float bulk2,float VWC2,float pore2,float VWCR2,float VWCC2){
+if(flag2==1){//測定値取り出すときの処理
+// Serial.print(flag);Serial.println("display");//デバッグ用
  Serial.println("=============================");
  Serial.print("Temprature [degC],");
  Serial.print("EC BULK [dS/m],");
@@ -291,41 +317,38 @@ if(flag==1){//測定値取り出すときの処理
  Serial.print(pore2); Serial.print(""); 
  Serial.print(VWCR2); Serial.print(","); 
  Serial.print(VWCC2); Serial.println(","); 
-//*/
 }
 }
 
 void program(){
   //測定開始
-  Serial.print("Start sensor");
-  size=6;
-int  value[]={0X02,0X07,0X01,0X01,0X0D,0X70};
-  writecom(size,value);
+//Serial.print("Start sensor");//デバッグ用
+  int  value[]={0X02,0X07,0X01,0X01,0X0D,0X70};
+  writecom(6,value);
+  delay(100);
   receive(6);//受信バイト数6
 
  //測定完了ステータス読み出し
   flag=0;
  while(flag==0){
-  Serial.print("Read status");
-  size=5;
+//  Serial.print("Read status");//デバッグ用
   int value1[]={0X01,0X08,0X01,0X00,0XE6,0X00};
-  writecom(size,value1);
-  delay(100);//測定完了ステータス確認サイクル
+  writecom(5,value1);
+  delay(100);
   receive(6);//受信バイト数6
- }
+  delay(500);//測定完了ステータス確認サイクル
+  }
 
 //測定データ読み出し
-//  Serial.print("Read data");
- //flag=2;
- size=5;
- int value2[]={0X01,0X13,0X10,0XFC,0X2C,0X00};
+  size=5;
+  int value2[]={0X01,0X13,0X10,0XFC,0X2C,0X00};
   writecom(size,value2);
-  receive(21);//受信バイト数21
+  delay(100);
+  receive2(21);//受信バイト数21
 
 }
 
 void setup() {
-  // put your setup code here, to run once:
   Serial.begin(9600);
   mySerial.begin(9600);
   Serial.println("Soil sensor");
@@ -337,13 +360,12 @@ void setup() {
   Serial.print("VWC-ROCK [%],");
   Serial.println("VWC-COCO [%],");
 
-UECSsetup();//UECS不使用時はコメントアウト
+  UECSsetup();
   }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  //debug Serial.println("loop");
   program();
-  UECSloop();//UECS不使用時はコメントアウト
-  delay(3000);//測定間隔
+  UECSloop();
+  int interval=3000;
+  delay(interval);//測定間隔(ms)
 }
