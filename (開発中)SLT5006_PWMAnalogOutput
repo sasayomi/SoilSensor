@@ -125,16 +125,30 @@ void display(int flag2,float temp2,float bulk2,float VWC2,float pore2,float VWCR
   Serial.print(temp2); Serial.print(",");
   Serial.print(bulk2); Serial.print(","); 
   Serial.print(VWC2); Serial.print(","); 
-  Serial.print(pore2); Serial.print(""); 
+  Serial.print(pore2); Serial.print(","); 
   Serial.print(VWCR2); Serial.print(","); 
   Serial.print(VWCC2); Serial.println(","); 
 
-  temp3 =(int)((temp2+20)/80*255);//80*V-20 計測範囲-20-60℃
-  VWC3 = (int)(VWC2/100*255);//100*V　計測範囲0-60%
-  bulk3 =(int)(bulk2/5*255);//5*V 計測範囲　0－5dS/m
-  pore3 =(int)(pore2/5*255);//5*V
+  int temp3 =round((temp2+20)/80*255);//80*V-20 計測範囲-20-60℃
+  int VWC3 = round(VWC2/100*255);//100*V　計測範囲0-60%
+  int bulk3 =round(bulk2/5*255);//5*V 計測範囲　0－5dS/m
+  int pore3 =round(pore2/5*255);//5*V
+  int VWCR3 =round(VWCR2/100*255);//5*V
+  int VWCC3 =round(VWCC2/100*255);//5*V
+  
+  Serial.print("PWM number "); Serial.print("：");
+  Serial.print(temp3); Serial.print(",");
+  Serial.print(bulk3); Serial.print(","); 
+  Serial.print(VWC3); Serial.print(","); 
+  Serial.print(pore3); Serial.println(""); 
+  Serial.print("PWM Voltage"); Serial.print("：");
+  Serial.print(float(temp3)/255); Serial.print(",");
+  Serial.print(float(bulk3)/255); Serial.print(","); 
+  Serial.print(float(VWC3)/255); Serial.print(","); 
+  Serial.print(float(pore3)/255); Serial.println(""); 
+
   analogWrite(analogout_TEMP,temp3);  
-  analogWrite(analogout_VWC,VWC3);  
+  analogWrite(analogout_VWC,VWC3);  //培地に合わせて変更
   analogWrite(analogout_bulk,bulk3);  
   analogWrite(analogout_pore,pore3);  
 
