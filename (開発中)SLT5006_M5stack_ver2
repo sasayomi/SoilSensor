@@ -8,6 +8,8 @@ Black--> 4 --> GND
 
 //定義部
 #include <M5Stack.h>
+//センサ接続用
+#include <SoftwareSerial.h> //EspSoftwareSerial必要
 //WIFI接続用
 #include <ArduinoJson.h>    
 #include <WiFi.h>     
@@ -20,7 +22,7 @@ unsigned long currentMillis;
 unsigned long lastupdateMillis = 0;
 int lastbattery = -1;
 
-// Wifi制御用
+//Wifi制御用
 String JsonData;                                            // JSON形式データの格納用
 int sdstat = 0;                                             // microSDカードからのデータ読み出し状況（False:0,True:1）
 String i_ssid, i_pass;                                      // SSIDとパスワードの格納用
@@ -35,7 +37,6 @@ struct tm timeInfo;                                         // tmオブジェク
 int smin;
 
 //センサ通信用
-#include <SoftwareSerial.h> //EspSoftwareSerial必要
 SoftwareSerial GroveA(21, 22);
 
 int flag;
@@ -52,17 +53,17 @@ void get_wifi_info() {//SSID/PASS取得関数
     while (1);
   }
   Serial.println("microSD card initialized.");              // シリアルコンソールへの出力
-  M5.Lcd.println("microSD card initialized.");              // シリアルコンソールへの出力
+  //M5.Lcd.println("microSD card initialized.");              // シリアルコンソールへの出力
 
   if ( SD.exists("/SSID.txt")) {                            // ファイルの存在確認（SSID.ini）
     Serial.println("SSID.txt exists.");                     // ファイルがある場合の処理
-    M5.Lcd.println("SSID.txt exists.");                     // ファイルがある場合の処理
+    //M5.Lcd.println("SSID.txt exists.");                     // ファイルがある場合の処理
     delay(500);
     File myFile = SD.open("/SSID.txt", FILE_READ);          // 読み取り専用でファイルを開く
 
     if (myFile) {                                           // ファイルが正常に開けた場合
       Serial.println("/SSID.txt Content:");
-      M5.Lcd.println("/SSID.txt Content:");
+      //M5.Lcd.println("/SSID.txt Content:");
       while (myFile.available()) {                          // ファイル内容を順に変数に格納
         JsonData.concat(myFile.readString());
       }
@@ -93,7 +94,7 @@ void read_json_wifi_info(){ //SSID/pass読み出し関数
     i_pass = n_jsondata["pass"].as<String>();             // "pass"の値を取得
 
     Serial.println("Can read from JSON Data!");           // シリアルコンソールへの出力
-    M5.Lcd.println("Can read from JSON Data!");           // シリアルコンソールへの出力
+    //M5.Lcd.println("Can read from JSON Data!");           // シリアルコンソールへの出力
     Serial.print("ID: ");
     Serial.println(i_ssid);                               // "ssid"の値をディスプレイ表示
     Serial.print("PW: ");
@@ -102,6 +103,7 @@ void read_json_wifi_info(){ //SSID/pass読み出し関数
 }
 
 void connect_wifi(){  //WIFIアクセスポイント接続関数
+ M5.Lcd.setCursor(0, 208);
   Serial.print("Conecting Wi-Fi ");                       // シリアルコンソールへの出力
   M5.Lcd.print("Conecting Wi-Fi ");                       // シリアルコンソールへの出力
 
@@ -235,7 +237,7 @@ void display(int flag2,float temp2,float bulk2,float VWC2,float pore2,float VWCR
   Serial.print(",");Serial.print(VWC2);
   Serial.print(",");Serial.print(pore2);Serial.println(",");
 
-  M5.Lcd.clear();
+  //M5.Lcd.clear();
   M5.Lcd.setCursor(0, 32);
   M5.Lcd.setTextColor(YELLOW); 
   M5.Lcd.print("Temp   ");M5.Lcd.print(temp2);M5.Lcd.println(" deg");
