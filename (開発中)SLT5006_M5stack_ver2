@@ -1,0 +1,167 @@
+/*
+SLT5006(UART) --> Grove -->M5stack
+Yellow--> 1 -->GPIO22
+Blue --> 2 -->GPIO21
+Red&white --> 3 -->5V
+Black--> 4 --> GND
+*/
+
+#include <M5Stack.h>
+#include <SoftwareSerial.h> //EspSoftwareSerial必要
+SoftwareSerial GroveA(21, 22);
+
+int flag;
+int size;
+
+void writecom(int size, int value[]){//センサ送信
+for (int i=0;i<size;i++){
+ GroveA.write(value[i]);
+}
+
+while (GroveA.available()>0){
+ char t = GroveA.read();
+}
+  Serial.print("From M5stack:");Serial.print(" ");
+for (int i=0;i<size;i++){
+ Serial.print(value[i],HEX);Serial.print(" "); 
+}
+Serial.print(flag);  Serial.println("send");
+}
+
+void receive(int valn){//センサ受信
+int val[valn]={0};
+if(GroveA.available()>0){
+for (int i=0; i<valn;i++){
+  val[i]=GroveA.read();
+}
+}
+while (GroveA.available()>0){
+ char t = GroveA.read();
+}
+Serial.print(flag);Serial.print("fromsensor");
+for (int i=0;i<valn;i++){
+ Serial.print(val[i],HEX);;Serial.print(" "); 
+}
+Serial.print(flag);Serial.println("receive");
+if((val[1]==8)&&(val[3]==1)){
+  flag=1;
+ Serial.println("read/measured");
+  for (int i=0; i<valn;i++){
+    Serial.print(val[i],HEX);Serial.print(" ");
+     }
+  }else{
+      Serial.println("readonly");
+         }
+}
+
+void receive2(int valn){
+  valn=21;
+int val[valn]={0};
+if(GroveA.available()>0){
+for (int i=0; i<valn;i++){
+  val[i]=GroveA.read();
+}
+}
+while (GroveA.available()>0){
+ char t = GroveA.read();
+}
+Serial.print(flag);Serial.print("fromsensor");
+for (int i=0;i<valn;i++){
+ Serial.print(val[i],HEX);;Serial.print(" "); 
+}
+Serial.print(flag);Serial.println("receive");
+
+if((val[1]==8)&&(val[3]==1)){
+  flag=1;
+ Serial.println("read/measured");
+  for (int i=0; i<valn;i++){
+    Serial.print(val[i],HEX);Serial.print(" ");
+     }
+  }else{
+      Serial.println("readonly");
+         }
+float temp=0;
+float bulk=0;
+float VWC=0;
+float VWCR=0;
+float VWCC=0;
+float pore=0;
+temp=(val[3]+val[4]*256)*0.0625;
+bulk=(val[5]+val[6]*256)*0.001;
+VWC=(val[9]+val[10]*256)*0.1;
+VWCR=(val[7]+val[8]*256)*0.1;
+VWCC=(val[11]+val[12]*256)*0.1;
+pore=(val[15]+val[16]*256)*0.001;
+display(flag,temp,bulk,VWC,pore,VWCR,VWCC);
+
+}
+
+void display(int flag2,float temp2,float bulk2,float VWC2,float pore2,float VWCR2,float VWCC2){
+ if(flag2==1) {
+  Serial.print(flag);Serial.println("display");
+  Serial.print(",");Serial.print(temp2);
+  Serial.print(",");Serial.print(bulk2);
+  Serial.print(",");Serial.print(VWC2);
+  Serial.print(",");Serial.print(pore2);Serial.println(",");
+
+  M5.Lcd.clear();
+  M5.Lcd.setCursor(0, 30);
+  M5.Lcd.print("Temp   ");M5.Lcd.print(temp2);M5.Lcd.println(" deg");
+  M5.Lcd.print("ECbulk  ");M5.Lcd.print(bulk2);M5.Lcd.println(" dS/m");
+  M5.Lcd.print("VWC     ");M5.Lcd.print(VWC2);M5.Lcd.println(" %");
+  M5.Lcd.print("ECpore  ");M5.Lcd.print(pore2);M5.Lcd.println(" dS/m");
+
+ }
+}
+
+void program(){
+  //測定開始
+  Serial.print("Start sensor");
+  int  value[]={0X02,0X07,0X01,0X01,0X0D,0X70};
+  writecom(6,value);
+  delay(100);
+  receive(6);//受信バイト数6
+
+ //測定完了ステータス読み出し
+  flag=0;
+ while(flag==0){
+  Serial.print("Read status");
+  int value1[]={0X01,0X08,0X01,0X00,0XE6,0X00};
+  writecom(5,value1);
+  delay(100);
+  receive(6);//受信バイト数6
+  delay(500);//測定完了ステータス確認サイクル
+   }
+
+//測定データ読み出し
+ int value2[]={0X01,0X13,0X10,0XFC,0X2C,0X00};
+  writecom(5,value2);
+  delay(100);
+  receive2(21);//受信バイト数21
+}
+void setup() {
+  M5.begin();                 // 本体初期化(LCD, SD, Serial, I2C)
+  M5.Power.begin();           // 電源初期化
+  Serial.begin(9600);         // 標準のシリアル通信初期化（初期値はG3（RX）,G1（TX））
+  GroveA.begin(9600);        // シリアル通信2初期化 (初期値は G16（RX）, G17（TX）)
+    //LCD表示
+  M5.Lcd.setTextColor(YELLOW); 
+  M5.Lcd.fillScreen(BLACK); // 背景色
+  M5.Lcd.setTextSize(3);    // 文字サイズ（整数倍率）
+  M5.Lcd.println("Soil Sensor"); 
+
+}
+
+
+void loop() {
+M5.update();
+    if (M5.BtnA.wasReleased() || M5.BtnA.pressedFor(1000, 200)) {
+        M5.Lcd.setCursor(0, 200);
+        M5.Lcd.print('A');
+    }
+program();
+int interval=3000;
+        M5.Lcd.setCursor(0, 200);
+        M5.Lcd.print("Interval:");M5.Lcd.print(interval);M5.Lcd.print("msec");
+delay(interval);//測定間隔(ms)
+}
