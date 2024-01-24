@@ -154,11 +154,6 @@ void setup() {
 
 
 void loop() {
-M5.update();
-    if (M5.BtnA.wasReleased() || M5.BtnA.pressedFor(1000, 200)) {
-        M5.Lcd.setCursor(0, 200);
-        M5.Lcd.print('A');
-    }
 program();
 int interval=3000;
         M5.Lcd.setCursor(0, 200);
