@@ -1,5 +1,5 @@
 /*
-SLT5006(UART) --> Grove -->M5stack
+SLT5006(UART) --> Grove -->M5stackBASIC
 Yellow--> 1 -->GPIO22
 Blue --> 2 -->GPIO21
 Red&white --> 3 -->5V
