@@ -4,6 +4,8 @@ Red&white -->5V
 Black--> GND
 Blue -->D2
 Yellow-->D3
+
+0-5V Output
 */
 
 #include <SoftwareSerial.h> //EspSoftwareSerial必要
@@ -133,8 +135,8 @@ void display(int flag2,float temp2,float bulk2,float VWC2,float pore2,float VWCR
   int VWC3 = round(VWC2/100*255);//100*V　計測範囲0-60%
   int bulk3 =round(bulk2/5*255);//5*V 計測範囲　0－5dS/m
   int pore3 =round(pore2/5*255);//5*V
-  int VWCR3 =round(VWCR2/100*255);//5*V
-  int VWCC3 =round(VWCC2/100*255);//5*V
+  int VWCR3 =round(VWCR2/100*255);//20*V
+  int VWCC3 =round(VWCC2/100*255);//20*V
   
   Serial.print("PWM number "); Serial.print("：");
   Serial.print(temp3); Serial.print(",");
@@ -142,10 +144,10 @@ void display(int flag2,float temp2,float bulk2,float VWC2,float pore2,float VWCR
   Serial.print(VWC3); Serial.print(","); 
   Serial.print(pore3); Serial.println(""); 
   Serial.print("PWM Voltage"); Serial.print("：");
-  Serial.print(float(temp3)/255); Serial.print(",");
-  Serial.print(float(bulk3)/255); Serial.print(","); 
-  Serial.print(float(VWC3)/255); Serial.print(","); 
-  Serial.print(float(pore3)/255); Serial.println(""); 
+  Serial.print(float(temp3)/51); Serial.print(",");
+  Serial.print(float(bulk3)/51); Serial.print(","); 
+  Serial.print(float(VWC3)/51); Serial.print(","); 
+  Serial.print(float(pore3)/51); Serial.println(""); 
 
   analogWrite(analogout_TEMP,temp3);  
   analogWrite(analogout_VWC,VWC3);  //培地に合わせて変更
