@@ -252,7 +252,9 @@ void display(int flag2,float temp2,float bulk2,float VWC2,float pore2,float VWCR
   
 
     file = SD.open(fname, FILE_APPEND);
-    file.print(temp2);
+      file.print(timeInfo);
+      file.print(",");      
+      file.print(temp2);
       file.print(",");
       file.print(bulk2);
       file.print(",");    
@@ -265,7 +267,15 @@ void display(int flag2,float temp2,float bulk2,float VWC2,float pore2,float VWCR
 }
 
 void program(){
-
+  M5.update();  // 本体のボタン状態更新
+  if (M5.Btn.isPressed()) {         // ボタンが押されていれば
+    M5.Lcd.setCursor(0, 175);
+    M5.Lcd.setTextColor(WHITE,BLACK);
+    M5.Lcd.setTextSize(2);
+    M5.Lcd.print("PUSH");
+  } else {                          // ボタンが押されてなければ
+    
+  }
   //測定開始
   Serial.print("Start sensor");
   int  value[]={0X02,0X07,0X01,0X01,0X0D,0X70};
@@ -292,7 +302,6 @@ void program(){
 void setup() {
   M5.begin();                 // 本体初期化(LCD, SD, Serial, I2C)
   M5.Power.begin();           // 電源初期化
-//  Wire.begin();
   Serial.begin(9600);         // 標準のシリアル通信初期化（初期値はG3（RX）,G1（TX））
   GroveA.begin(9600);        // シリアル通信2初期化 (初期値は G16（RX）, G17（TX）)
     //LCD表示
