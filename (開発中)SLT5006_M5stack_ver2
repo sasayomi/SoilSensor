@@ -5,7 +5,8 @@ Black--> GND
 Blue -->16
 Yellow-->17
 
-WiFi接続・時刻表示機能追加
+WiFi時刻取得表示機能追加
+SDカード保存機能
 */
 #include <M5Stack.h>
 
@@ -14,6 +15,9 @@ SoftwareSerial GroveA(21, 22);
 
 int flag;
 int size;
+
+const char* fname = "/btnevent_log.csv";
+File file;
 
 //Time
 #include <ArduinoJson.h>                                    // JSONライブラリ
@@ -123,7 +127,7 @@ void time_sync(const char* ntpsrv, long gmt_offset, int daylight_offset) {
     sprintf(buf, "%04d-%02d-%02d %02d:%02d:%02d\n",     // 表示内容の編集
     timeInfo.tm_year + 1900, timeInfo.tm_mon + 1, timeInfo.tm_mday,
     timeInfo.tm_hour, timeInfo.tm_min, timeInfo.tm_sec);
-    M5.Lcd.setCursor(0, 14);
+    M5.Lcd.setCursor(0, 21);
     M5.Lcd.setTextColor(YELLOW,BLACK);
     M5.Lcd.setTextSize(3);
     M5.Lcd.printf(buf, "%04d-%02d-%02d %02d:%02d:%02d\n",timeInfo.tm_year + 1900, timeInfo.tm_mon + 1, timeInfo.tm_mday,timeInfo.tm_hour, timeInfo.tm_min, timeInfo.tm_sec);
@@ -132,6 +136,10 @@ void time_sync(const char* ntpsrv, long gmt_offset, int daylight_offset) {
   }
   else {
     Serial.print("NTP Sync Error ");                        // シリアルモニターに表示
+    M5.Lcd.setCursor(0, 21);
+    M5.Lcd.setTextColor(WHITE,BLACK);
+    M5.Lcd.setTextSize(2);
+    M5.Lcd.print("TIME NOT AVAILABLE");
   }
 }
 
@@ -233,8 +241,8 @@ void display(int flag2,float temp2,float bulk2,float VWC2,float pore2,float VWCR
     Serial.print(",");Serial.print(VWC2);
     Serial.print(",");Serial.print(pore2);Serial.println(",");
 
-    M5.Lcd.fillRect(0, 56, 320, 120 , BLACK); 
-    M5.Lcd.setCursor(0, 56);
+    M5.Lcd.fillRect(0, 63, 320, 120 , BLACK); 
+    M5.Lcd.setCursor(0, 63);
     M5.Lcd.setTextColor(YELLOW); 
     M5.Lcd.setTextSize(3);    // 文字サイズ（整数倍率）
     M5.Lcd.print("Temp   ");M5.Lcd.print(temp2);M5.Lcd.println(" deg");
@@ -242,6 +250,17 @@ void display(int flag2,float temp2,float bulk2,float VWC2,float pore2,float VWCR
     M5.Lcd.print("VWC     ");M5.Lcd.print(VWC2);M5.Lcd.println(" %");
     M5.Lcd.print("ECpore  ");M5.Lcd.print(pore2);M5.Lcd.println(" dS/m");
   
+
+    file = SD.open(fname, FILE_APPEND);
+    file.print(temp2);
+      file.print(",");
+      file.print(bulk2);
+      file.print(",");    
+      file.print(VWC2);
+      file.print(",");
+      file.print(pore2);
+      file.print("\n");
+    file.close();
   }
 }
 
