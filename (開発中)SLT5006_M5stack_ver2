@@ -7,43 +7,59 @@ Yellow-->17
 
 WiFi時刻取得表示機能追加
 SDカード保存機能（時刻・見出しが未完）
+WiFi経由でブラウザからリアルタイムデータ読み込み（CSVデータ未完）
 
 計画
-・WiFi経由でブラウザからデータ読み込み（リアルタイム・CSVデータ）
+
 ・計測スパン変更
 ・簡易ルータ化（UECS送信）
 */
-
+//定義
+//基本部
 #include <M5Stack.h>
-
-#include <SoftwareSerial.h> //EspSoftwareSerial必要
-SoftwareSerial GroveA(21, 22);
-
-int flag;
-int size;
-
-const char* fname = "/btnevent_log.csv";
-File file;
-
-//Time
+//時刻表示・WiFi部
 #include <ArduinoJson.h>                                    // JSONライブラリ
 #include <WiFi.h>                                           // Wifi制御用ライブラリ
 #include <time.h>                                           // 時刻制御用ライブラリ
+//サーバ部
+#include <WebServer.h>
+#include <ESPmDNS.h>
+//シリアル通信部
+#include <SoftwareSerial.h> //EspSoftwareSerial必要
 
+//グローバル変数
+//基本部
+//時刻表示・WiFi部
 String JsonData;                                            // JSON形式データの格納用
 int sdstat = 0;                                             // microSDカードからのデータ読み出し状況（False:0,True:1）
 char buf[60];
 StaticJsonDocument<192> n_jsondata;                         // JSON形式データ格納用メモリの確保
 String i_ssid, i_pass;                                      // SSIDとパスワードの格納用
-
-// NTP接続情報　NTP connection information.
+  // NTP接続情報　NTP connection information.
 const char* NTPSRV      = "ntp.jst.mfeed.ad.jp";            // NTPサーバーアドレス NTP server address.
 const long  GMT_OFFSET  = 9 * 3600;                         // GMT-TOKYO(時差９時間）9 hours time difference.
 const int   DAYLIGHT_OFFSET = 0;                            // サマータイム設定なし No daylight saving time setting
-
 struct tm timeInfo;                                         // tmオブジェクトをtimeinfoとして生成
 int smin;
+//CSVファイル保存部
+const char* fname = "/btnevent_log.csv";
+File file;
+//サーバ部
+WebServer server(80); // WebServerオブジェクト作成
+//シリアル通信部
+SoftwareSerial GroveA(21, 22);
+int flag;
+int size;
+float temp=0;
+float bulk=0;
+float VWC=0;
+float VWCR=0;
+float VWCC=0;
+float pore=0;
+int interval=3000;//測定間隔(msec)
 
+//コード
+//時刻表示・WiFi部-------------------------
 void get_wifi_info() {
   if (!SD.begin()) {                                        // SDカードの初期化
     Serial.println("Card failed, or not present");          // シリアルコンソールへの出力
@@ -112,9 +128,10 @@ void connect_wifi(){
   Serial.println("WiFi connected"); 
   Serial.print("IP address: "); 
   Serial.println(WiFi.localIP());  
-//  M5.Lcd.fillRect(150, 120, 100, 30 , BLACK); 
-//  M5.Lcd.setTextColor(WHITE); 
+  //  M5.Lcd.fillRect(150, 120, 100, 30 , BLACK); 
+  //  M5.Lcd.setTextColor(WHITE); 
   M5.Lcd.print("WiFiON ");  
+  M5.Lcd.print(i_ssid);  
   }else{
   Serial.print("NoWiFi ");                                     // Wi-Fi接続結果をディスププレイへ出力
   M5.Lcd.print("NOWiFi ");    
@@ -134,8 +151,8 @@ void time_sync(const char* ntpsrv, long gmt_offset, int daylight_offset) {
     timeInfo.tm_year + 1900, timeInfo.tm_mon + 1, timeInfo.tm_mday,
     timeInfo.tm_hour, timeInfo.tm_min, timeInfo.tm_sec);
     M5.Lcd.setCursor(0, 21);
-    M5.Lcd.setTextColor(YELLOW,BLACK);
-    M5.Lcd.setTextSize(3);
+    M5.Lcd.setTextColor(WHITE,BLACK);
+    M5.Lcd.setTextSize(2);
     M5.Lcd.printf(buf, "%04d-%02d-%02d %02d:%02d:%02d\n",timeInfo.tm_year + 1900, timeInfo.tm_mon + 1, timeInfo.tm_mday,timeInfo.tm_hour, timeInfo.tm_min, timeInfo.tm_sec);
  
     Serial.println(buf);                                    // シリアルモニターに表示
@@ -149,7 +166,53 @@ void time_sync(const char* ntpsrv, long gmt_offset, int daylight_offset) {
   }
 }
 
-//sensing
+//サーバ部--------------------------------
+void handleTemp(){
+  char jump;
+  float temp4;
+  jump= 2;
+
+  char moji[1024];
+  float time=1;
+	float  data1 = time;
+  float  data2 = temp;
+	float  data3 = bulk;
+  float  data4 = VWC;
+  float  data5 = pore;
+  float  data6 = VWCR;
+  float  data7 = VWCC;
+  float  data8 = interval; 
+	//	moji配列に指定フォーマットで文字列を生成
+	//sprintf(moji, "% %c %.2f", data1, data2, data3);
+  sprintf(moji, 
+    "<html>\
+     <head>\
+        <title>Murata SoilSensor Measurement</title>\
+     </head>\
+     <body>\
+        <h1 style=\"font-size= 50px\">M5Stack Temperature Measurement</h1>\
+        <p style=\"font-size= 50px\">Temp: %.2f 'C</p>\
+        <p>Temp: %.2f 'C</p>\
+        <p>ECBulk: %.2f dS/m</p>\
+        <p>VWC: %.2f %%</p>\
+        <p>ECPORE: %.2f dS/m</p>\
+        <p>VWC ROCK: %.2f %%</p>\
+        <p>VWC COCO: %.2f %%</p>\
+     </body>\
+     </html>",
+  data1, data2,data3,data4,data5,data6,data7);
+
+  server.send(200, "text/html", moji);
+  M5.Lcd.println("accessed on \"/\"");
+}
+
+void handleNotFound(){
+  server.send(404, "text/plain", "File Not Found\n\n");
+  M5.Lcd.println("File Not Found");
+}
+
+//シリアル通信部-----------------------------------------------------------
+
 void writecom(int size, int value[]){//センサ送信
   for (int i=0;i<size;i++){
     GroveA.write(value[i]);
@@ -216,12 +279,7 @@ void receive2(int valn){
   }else{
       Serial.println("readonly");
   }
-  float temp=0;
-  float bulk=0;
-  float VWC=0;
-  float VWCR=0;
-  float VWCC=0;
-  float pore=0;
+
   temp=(val[3]+val[4]*256)*0.0625;
   bulk=(val[5]+val[6]*256)*0.001;
   VWC=(val[9]+val[10]*256)*0.1;
@@ -229,9 +287,9 @@ void receive2(int valn){
   VWCC=(val[11]+val[12]*256)*0.1;
   pore=(val[15]+val[16]*256)*0.001;
   display(flag,temp,bulk,VWC,pore,VWCR,VWCC);
-
 }
 
+//LCD表示部
 void display(int flag2,float temp2,float bulk2,float VWC2,float pore2,float VWCR2,float VWCC2){
   get_wifi_info();                                          // microSDカードからWi-Fi情報の取得
   if (sdstat == 1) {
@@ -250,13 +308,14 @@ void display(int flag2,float temp2,float bulk2,float VWC2,float pore2,float VWCR
     M5.Lcd.fillRect(0, 63, 320, 120 , BLACK); 
     M5.Lcd.setCursor(0, 63);
     M5.Lcd.setTextColor(YELLOW); 
-    M5.Lcd.setTextSize(3);    // 文字サイズ（整数倍率）
-    M5.Lcd.print("Temp   ");M5.Lcd.print(temp2);M5.Lcd.println(" deg");
+    M5.Lcd.setTextSize(2);    // 文字サイズ（整数倍率）
+    M5.Lcd.print("Temp    ");M5.Lcd.print(temp2);M5.Lcd.println(" deg");
     M5.Lcd.print("ECbulk  ");M5.Lcd.print(bulk2);M5.Lcd.println(" dS/m");
     M5.Lcd.print("VWC     ");M5.Lcd.print(VWC2);M5.Lcd.println(" %");
     M5.Lcd.print("ECpore  ");M5.Lcd.print(pore2);M5.Lcd.println(" dS/m");
-  
-
+    M5.Lcd.print("VWC ROCK");M5.Lcd.print(VWCR);M5.Lcd.println(" deg");
+    M5.Lcd.print("VWC COCO");M5.Lcd.print(VWCC);M5.Lcd.println(" dS/m");
+    //SD
     file = SD.open(fname, FILE_APPEND);
     file.print(temp2);
       file.print(",");
@@ -268,8 +327,12 @@ void display(int flag2,float temp2,float bulk2,float VWC2,float pore2,float VWCR
       file.print("\n");
     file.close();
   }
+  M5.Lcd.setCursor(0, 200);
+  M5.Lcd.print("Interval:");M5.Lcd.print(interval);M5.Lcd.print("msec");
 }
 
+//基本部
+//サブループ
 void program(){
 
   //測定開始
@@ -298,18 +361,18 @@ void program(){
 void setup() {
   M5.begin();                 // 本体初期化(LCD, SD, Serial, I2C)
   M5.Power.begin();           // 電源初期化
-//  Wire.begin();
   Serial.begin(9600);         // 標準のシリアル通信初期化（初期値はG3（RX）,G1（TX））
   GroveA.begin(9600);        // シリアル通信2初期化 (初期値は G16（RX）, G17（TX）)
-    //LCD表示
+
+  //LCD表示部
   M5.Lcd.setTextColor(YELLOW); 
   M5.Lcd.fillScreen(BLACK); // 背景色
-  //LCD表示改良
   M5.Lcd.setTextSize(3);    // 文字サイズ（整数倍率）
   M5.Lcd.setTextDatum(4);                                 // 中央基準
   M5.Lcd.drawString("Soil Sensor",M5.Lcd.width()/2, 120);   // 中央揃え(文字列, x座標, y座標, フォント)
   M5.Lcd.setTextDatum(0);  
 
+  //時刻/WiFi部
   get_wifi_info();                                          // microSDカードからWi-Fi情報の取得
   if (sdstat == 1) {
     read_json_wifi_info();                                  // JSON形式データの読み出し
@@ -317,12 +380,20 @@ void setup() {
   }
   time_sync(NTPSRV, GMT_OFFSET, DAYLIGHT_OFFSET);           // 時刻同期関数  
 
+   //サーバ部
+   if(MDNS.begin("m5stack")){
+     Serial.println("MDNS responder started");
+   }
+   server.on("/", handleTemp); // URLにアクセスされた際の動作を登録
+   server.onNotFound(handleNotFound); // server.onで登録されていないURLにアクセスされた際の動作を登録
+   server.begin(); // クライアントからの接続応答待ちを開始
+   Serial.println("HTTP server started");
+
 }
 
 void loop() {
+  server.handleClient();
   program();
-  int interval=3000;
-  M5.Lcd.setCursor(0, 200);
-  M5.Lcd.print("Interval:");M5.Lcd.print(interval);M5.Lcd.print("msec");
   delay(interval);//測定間隔(ms)
 }
+
