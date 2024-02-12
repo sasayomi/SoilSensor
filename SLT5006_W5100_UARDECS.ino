@@ -162,7 +162,7 @@ U_ccmList[CCMID_VWCC].value=VWCC3;
  Serial.print(temp3); Serial.print(",");
  Serial.print(bulk3); Serial.print(","); 
  Serial.print(VWC3); Serial.print(","); 
- Serial.print(pore3); Serial.print(""); 
+ Serial.print(pore3); Serial.print(","); 
  Serial.print(VWCR3); Serial.print(","); 
  Serial.print(VWCC3); Serial.println(","); 
 */
