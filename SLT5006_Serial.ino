@@ -122,7 +122,7 @@ void display(int flag2,float temp2,float bulk2,float VWC2,float pore2,float VWCR
   Serial.print(temp2); Serial.print(",");
   Serial.print(bulk2); Serial.print(","); 
   Serial.print(VWC2); Serial.print(","); 
-  Serial.print(pore2); Serial.print(""); 
+  Serial.print(pore2); Serial.print(","); 
   Serial.print(VWCR2); Serial.print(","); 
   Serial.print(VWCC2); Serial.println(","); 
  }
