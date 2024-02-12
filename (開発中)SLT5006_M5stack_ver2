@@ -308,13 +308,14 @@ void display(int flag2,float temp2,float bulk2,float VWC2,float pore2,float VWCR
     M5.Lcd.fillRect(0, 63, 320, 120 , BLACK); 
     M5.Lcd.setCursor(0, 63);
     M5.Lcd.setTextColor(YELLOW); 
-    M5.Lcd.setTextSize(2);    // 文字サイズ（整数倍率）
+    M5.Lcd.setTextSize(3);    // 文字サイズ（整数倍率）
     M5.Lcd.print("Temp    ");M5.Lcd.print(temp2);M5.Lcd.println(" deg");
     M5.Lcd.print("ECbulk  ");M5.Lcd.print(bulk2);M5.Lcd.println(" dS/m");
     M5.Lcd.print("VWC     ");M5.Lcd.print(VWC2);M5.Lcd.println(" %");
     M5.Lcd.print("ECpore  ");M5.Lcd.print(pore2);M5.Lcd.println(" dS/m");
-    M5.Lcd.print("VWC ROCK");M5.Lcd.print(VWCR);M5.Lcd.println(" deg");
-    M5.Lcd.print("VWC COCO");M5.Lcd.print(VWCC);M5.Lcd.println(" dS/m");
+    M5.Lcd.print("VWC ROCK");M5.Lcd.print(VWCR);M5.Lcd.println(" %");
+    M5.Lcd.print("VWC COCO");M5.Lcd.print(VWCC);M5.Lcd.println(" %");
+    M5.Lcd.setTextSize(2);    // 文字サイズ（整数倍率）
     //SD
     file = SD.open(fname, FILE_APPEND);
     file.print(temp2);
@@ -327,7 +328,7 @@ void display(int flag2,float temp2,float bulk2,float VWC2,float pore2,float VWCR
       file.print("\n");
     file.close();
   }
-  M5.Lcd.setCursor(0, 200);
+  M5.Lcd.setCursor(0, 220);
   M5.Lcd.print("Interval:");M5.Lcd.print(interval);M5.Lcd.print("msec");
 }
 
