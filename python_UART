@@ -1,0 +1,102 @@
+#python->UARTでSLT5006を動かす
+
+import serial
+import serial.tools.list_ports
+import time
+
+# シリアルポートを自動検出する関数
+def auto_detect_serial_port():
+    ports = list(serial.tools.list_ports.comports())
+    for p in ports:
+        print(p)
+        if 'USB Serial Port' in p.description:
+            return p.device
+    return None
+
+# シリアルポートをオープンする
+ser = serial.Serial(auto_detect_serial_port(), 9600, timeout=1)
+
+# ここでシリアル通信を行う
+
+com1 = [ 0x02, 0x07, 0x01, 0x01, 0x0D, 0x70 ]
+#print(len(com1))
+send1 = bytes(com1)
+print(send1)
+
+ser.write(send1)
+
+ser.flush()
+time.sleep(0.5)
+
+rx = ser.readline()
+print("rx: ", *rx)
+
+time.sleep(1)
+
+read = 0
+count = 0
+while read == 0:
+	com2 = [ 0x01, 0x08, 0x01, 0x00, 0xE6]
+	send1 = bytes(com2)
+	print(send1)
+
+	ser.write(send1)
+
+	ser.flush()
+	time.sleep(0.5)
+	rx = ser.readline()
+	print("rx: ", *rx)
+	if rx[3] == 1:
+		read = 1
+	count =count+1
+	if count==10:
+		break
+	time.sleep(1)
+
+com3 = [ 0x01, 0x13, 0x10, 0xFC, 0x2C]
+send1 = bytes(com3)
+print(send1)
+
+ser.write(send1)
+
+ser.flush()
+time.sleep(0.5)
+val = ser.readline()
+print("rx: ", *val)
+
+temp=(val[3]+val[4]*256)*0.0625
+bulk=(val[5]+val[6]*256)*0.001
+VWC=(val[9]+val[10]*256)*0.1
+VWCR=(val[7]+val[8]*256)*0.1
+VWCC=(val[11]+val[12]*256)*0.1
+pore=(val[15]+val[16]*256)*0.001
+
+
+print("temp",temp,"℃")
+print("ECBulk",bulk,"dS/m")
+print("VWCSoil",VWC,"%")
+print("VWCRock",VWCR,"%")
+print("VWCCoco",VWCC,"%")
+print("ECPore",pore,"dS/m")
+
+
+# シリアルポートをクローズする
+ser.close()
+
+"""
+UART
+02 07 01 01 0D 70
+01 08 01 00 E6 00
+01 13 10 FC 2C 00
+
+
+  temp=(val[3]+val[4]*256)*0.0625;
+  bulk=(val[5]+val[6]*256)*0.001;
+  VWC=(val[9]+val[10]*256)*0.1;
+  VWCR=(val[7]+val[8]*256)*0.1;
+  VWCC=(val[11]+val[12]*256)*0.1;
+  pore=(val[15]+val[16]*256)*0.001;
+  display(flag,temp,bulk,VWC,pore,VWCR,VWCC);
+
+
+"""
