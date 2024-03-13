@@ -7,21 +7,32 @@ import tkinter as tk
 from tkinter import ttk
 import tkinter.font as f
 
+portflag=0
+
 # シリアルポートを自動検出する関数
 def auto_detect_serial_port():
-    ports = list(serial.tools.list_ports.comports())
-    for p in ports:
-        print(p)
-        if 'USB Serial Port' in p.description:
-            return p.device
-    return None
+	ports = list(serial.tools.list_ports.comports())
+	for p in ports:
+		print(p)
+		if 'USB Serial Port' in p.description:
+			global portflag
+			portflag=1
+			return p.device
+	return None
 
 # シリアルポートをオープンする
 ser = serial.Serial(auto_detect_serial_port(), 9600, timeout=1)
 
+def com():
+	textport="COM PORT NOT OPEN"
+	if portflag==1:
+		textport="COM PORT OPEN"
+		return textport
+	return textport
+
 # ここでシリアル通信を行う
 
-val=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+val=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
 temp=0
 VWC=0
 def repeat():
@@ -91,44 +102,30 @@ def repeat():
 
 
 #出力関数
-def value():
-	#v1=val[3]
-	global temp
-	repeat()
-	time.sleep(0.5)
-	global val
-	temp=(val[3]+val[4]*256)*0.0625
-	bulk=(val[5]+val[6]*256)*0.001
-	VWC=(val[9]+val[10]*256)*0.1
-	VWCR=(val[7]+val[8]*256)*0.1
-	VWCC=(val[11]+val[12]*256)*0.1
-	pore=(val[15]+val[16]*256)*0.001
-
-	root.after(5000, value)
-	print(val[3])
-	t=val[3]
-	return t
-	
-
 def tempx():
 	global val
 	t=(val[3]+val[4]*256)*0.0625
 	return t
-
-
-
 def vwcx():
-	temp=(val[3]+val[4]*256)*0.0625
-	return temp
-
-#GUI
-"""
-root = tk.Tk()
-root.title("tkinterによるGUI画面作成")
-root.geometry("500x400")
-root.after(5000, value)
-time.sleep(3)
-"""
+    global val
+    vv=(val[9]+val[10]*256)*0.1
+    return vv
+def porex():
+    global val
+    p=(val[15]+val[16]*256)*0.001
+    return p
+def bulkx():
+    global val
+    b=(val[5]+val[6]*256)*0.001
+    return b
+def vwcrx():
+    global val
+    vr=(val[7]+val[8]*256)*0.1
+    return vr
+def vwccx():
+    global val
+    vc=(val[11]+val[12]*256)*0.1
+    return vc
 
 #時刻
 def time_string():
@@ -137,34 +134,70 @@ def time_string():
 #更新
 def update():
     label.configure(text=time_string())
-    lab11.configure(text=tempx())
+    lab11.configure(text=round(tempx(),2))
+    lab21.configure(text=round(vwcx(),2))
+    lab31.configure(text=round(porex(),2))
+    lab41.configure(text=round(bulkx(),2))
+    lab51.configure(text=round(vwcrx(),2))
+    lab61.configure(text=round(vwccx(),2))
+    label7.configure(text=com())
     label.after(1000, update)
 
 #GUI
 root = tk.Tk()
 root.title("SoilSensor")
-root.geometry("500x400")
+root.geometry("1000x600")
 root["bg"] = "black"
 
 style = ttk.Style()
 style.configure('TLabel', background='black', foreground='white')
 
-label = ttk.Label(root, text=time_string(), font=('Digital-7', 40))
-label.grid(row=0,column=0,columnspan=2)
+font1 = f.Font(family="Lucida Console", weight="bold", size=50)
 
-font1 = f.Font(family="Lucida Console", weight="bold", size=30, slant="italic")
-lab10 = ttk.Label(root, text="温度",font=("",36))
+label = ttk.Label(root, text=time_string(), font=font1)
+label.grid(row=0,column=0,columnspan=3)
+
+lab10 = ttk.Label(root, text="地温",font=font1)
 lab10.grid(row=1,column=0)
-lab11 = ttk.Label(root, text=tempx(),font=("",36))
-lab11.grid(row=1,column=1)
-lab12 = ttk.Label(root, text="℃",font=("",36))
-lab12.grid(row=1,column=2)
-lab20 = ttk.Label(root, text="温度",font=("",36))
+lab20 = ttk.Label(root, text="体積水分率",font=font1)
 lab20.grid(row=2,column=0)
-lab21 = ttk.Label(root, text=vwcx(),font=("",36))
+lab30 = ttk.Label(root, text="間隙水EC",font=font1)
+lab30.grid(row=3,column=0)
+lab40 = ttk.Label(root, text="バルクEC",font=font1)
+lab40.grid(row=4,column=0)
+lab50 = ttk.Label(root, text="体積水分率(Rock)",font=font1)
+lab50.grid(row=5,column=0)
+lab60 = ttk.Label(root, text="体積水分率(Coco)",font=font1)
+lab60.grid(row=6,column=0)
+
+lab11 = ttk.Label(root, text="--",font=font1)
+lab11.grid(row=1,column=1)
+lab21 = ttk.Label(root, text="--",font=font1)
 lab21.grid(row=2,column=1)
-lab22 = ttk.Label(root, text="℃",font=("",36))
+lab31 = ttk.Label(root, text="--",font=font1)
+lab31.grid(row=3,column=1)
+lab41 = ttk.Label(root, text="--",font=font1)
+lab41.grid(row=4,column=1)
+lab51 = ttk.Label(root, text="--",font=font1)
+lab51.grid(row=5,column=1)
+lab61 = ttk.Label(root, text="--",font=font1)
+lab61.grid(row=6,column=1)
+
+lab12 = ttk.Label(root, text="℃",font=font1)
+lab12.grid(row=1,column=2)
+lab22 = ttk.Label(root, text="%",font=font1)
 lab22.grid(row=2,column=2)
+lab32 = ttk.Label(root, text="dS/m",font=font1)
+lab32.grid(row=3,column=2)
+lab42 = ttk.Label(root, text="dS/m",font=font1)
+lab42.grid(row=4,column=2)
+lab52 = ttk.Label(root, text="%",font=font1)
+lab52.grid(row=5,column=2)
+lab62 = ttk.Label(root, text="%",font=font1)
+lab62.grid(row=6,column=2)
+
+label7 = ttk.Label(root, text=com(), font=font1)
+label7.grid(row=7,column=0,columnspan=3)
 
 label.after(1000, update)
 label.after(1000, repeat)
