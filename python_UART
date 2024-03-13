@@ -82,21 +82,3 @@ print("ECPore",pore,"dS/m")
 
 # シリアルポートをクローズする
 ser.close()
-
-"""
-UART
-02 07 01 01 0D 70
-01 08 01 00 E6 00
-01 13 10 FC 2C 00
-
-
-  temp=(val[3]+val[4]*256)*0.0625;
-  bulk=(val[5]+val[6]*256)*0.001;
-  VWC=(val[9]+val[10]*256)*0.1;
-  VWCR=(val[7]+val[8]*256)*0.1;
-  VWCC=(val[11]+val[12]*256)*0.1;
-  pore=(val[15]+val[16]*256)*0.001;
-  display(flag,temp,bulk,VWC,pore,VWCR,VWCC);
-
-
-"""
