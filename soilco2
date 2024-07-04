@@ -21,18 +21,18 @@ def auto_detect_serial_port():
 			return p.device
 	return None
 
-"""
 #CO2用のシリアルポートを探す
 comf = open('co2port.txt')  # comf = open('co2port.txt', 'rt'):
 s = comf.read()  # ファイルの全内容が1つの文字列として返される
 print(s)
+co2com=s
 comf.close()
-"""
 
 # シリアルポートをオープンする
 
 ser = serial.Serial(auto_detect_serial_port(), 9600, timeout=1)
-co2com='COM11'
+#ser = serial.Serial('COM4', 9600, timeout=1)
+#co2com='COM11'
 try:
 	serc = serial.Serial(co2com, 9600, timeout=1)#co2用
 except:
@@ -57,8 +57,7 @@ def co2():
 		num=0
 	return num
 
-# ここでシリアル通信を行う
-
+# 土壌センサシリアル通信
 val=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
 temp=0
 VWC=0
@@ -125,7 +124,7 @@ def repeat():
 	print("VWCCoco",VWCC,"%")
 	print("ECPore",pore,"dS/m")
 
-	root.after(5000, repeat)
+	#root.after(5000, repeat)
 
 
 #出力関数
@@ -158,86 +157,97 @@ def vwccx():
 def time_string():
     return time.strftime('%H:%M:%S')
 
-#更新
+#画面数値更新
 def update():
-    label.configure(text=time_string())
-    lab11.configure(text=round(tempx(),2))
-    lab21.configure(text=round(vwcx(),2))
-    lab31.configure(text=round(porex(),2))
-    lab41.configure(text=round(bulkx(),2))
-    lab51.configure(text=round(vwcrx(),2))
-    lab61.configure(text=round(vwccx(),2))
-    label9.configure(text=com())
-    lab71.configure(text=co2())
-    label.after(1000, update)
+	repeat()
+#	label.configure(text=time_string())
+	lab11.configure(text=round(tempx(),2))
+	lab21.configure(text=round(vwcx(),2))
+	lab31.configure(text=round(porex(),2))
+	lab41.configure(text=round(bulkx(),2))
+	lab51.configure(text=round(vwcrx(),2))
+	lab61.configure(text=round(vwccx(),2))
+#    label9.configure(text=com())
+	lab71.configure(text=co2())
+	root.after(1000, update)
+
+#初期動作
+#co2()
+repeat()
+
+def quit(self):
+    self.root.destroy()
 
 #GUI
 root = tk.Tk()
 root.title("SoilSensor")
-root.geometry("1000x800")
+root.state('zoomed')
+#root.geometry("1000x800")
+root.resizable(False, False)
 root["bg"] = "black"
 
 style = ttk.Style()
 style.configure('TLabel', background='black', foreground='white')
 
 font1 = f.Font(family="Lucida Console", weight="bold", size=50)
-"""
-label = ttk.Label(root, text=time_string(), font=font1)
-label.grid(row=0,column=0,columnspan=3)
-"""
+
+#label = ttk.Label(root, text=time_string(), font=font1)
+#label.grid(row=0,column=0,columnspan=3)
+rowbase=-1
+
 lab10 = ttk.Label(root, text="地温",font=font1)
-lab10.grid(row=1,column=0)
+lab10.grid(row=rowbase+1,column=0,pady=0)
 lab20 = ttk.Label(root, text="体積水分率",font=font1)
-lab20.grid(row=2,column=0)
+lab20.grid(row=rowbase+2,column=0)
 lab30 = ttk.Label(root, text="間隙水EC",font=font1)
-lab30.grid(row=3,column=0)
+lab30.grid(row=rowbase+3,column=0)
 lab40 = ttk.Label(root, text="バルクEC",font=font1)
-lab40.grid(row=4,column=0)
+lab40.grid(row=rowbase+4,column=0)
 lab50 = ttk.Label(root, text="体積水分率(Rock)",font=font1)
-lab50.grid(row=5,column=0)
+lab50.grid(row=rowbase+5,column=0)
 lab60 = ttk.Label(root, text="体積水分率(Coco)",font=font1)
-lab60.grid(row=6,column=0)
+lab60.grid(row=rowbase+6,column=0)
 lab70 = ttk.Label(root, text="CO2濃度",font=font1)
-lab70.grid(row=7,column=0)
+lab70.grid(row=rowbase+7,column=0,pady=50)
+button = tk.Button(root, text="Click and Quit", command=root.quit)
+button.grid(row=rowbase+8,columnspan=3,pady=50)
 
 lab11 = ttk.Label(root, text="--",font=font1)
-lab11.grid(row=1,column=1)
+lab11.grid(row=rowbase+1,column=1)
 lab21 = ttk.Label(root, text="--",font=font1)
-lab21.grid(row=2,column=1)
+lab21.grid(row=rowbase+2,column=1)
 lab31 = ttk.Label(root, text="--",font=font1)
-lab31.grid(row=3,column=1)
+lab31.grid(row=rowbase+3,column=1)
 lab41 = ttk.Label(root, text="--",font=font1)
-lab41.grid(row=4,column=1)
+lab41.grid(row=rowbase+4,column=1)
 lab51 = ttk.Label(root, text="--",font=font1)
-lab51.grid(row=5,column=1)
+lab51.grid(row=rowbase+5,column=1)
 lab61 = ttk.Label(root, text="--",font=font1)
-lab61.grid(row=6,column=1)
+lab61.grid(row=rowbase+6,column=1)
 lab71 = ttk.Label(root, text="--", font=font1)
-lab71.grid(row=7,column=1)
+lab71.grid(row=rowbase+7,column=1)
 
 lab12 = ttk.Label(root, text="℃",font=font1)
-lab12.grid(row=1,column=2)
+lab12.grid(row=rowbase+1,column=2)
 lab22 = ttk.Label(root, text="%",font=font1)
-lab22.grid(row=2,column=2)
+lab22.grid(row=rowbase+2,column=2)
 lab32 = ttk.Label(root, text="dS/m",font=font1)
-lab32.grid(row=3,column=2)
+lab32.grid(row=rowbase+3,column=2)
 lab42 = ttk.Label(root, text="dS/m",font=font1)
-lab42.grid(row=4,column=2)
+lab42.grid(row=rowbase+4,column=2)
 lab52 = ttk.Label(root, text="%",font=font1)
-lab52.grid(row=5,column=2)
+lab52.grid(row=rowbase+5,column=2)
 lab62 = ttk.Label(root, text="%",font=font1)
-lab62.grid(row=6,column=2)
+lab62.grid(row=rowbase+6,column=2)
 lab72 = ttk.Label(root, text="ppm",font=font1)
-lab72.grid(row=7,column=2)
+lab72.grid(row=rowbase+7,column=2)
 
-label9 = ttk.Label(root, text=com(), font=font1)
-label9.grid(row=9,column=0,columnspan=3)
+#label9 = ttk.Label(root, text=com(), font=font1)
+#label9.grid(row=9,column=0,columnspan=3)
 
-
-label.after(1000, update)
-label.after(1000, repeat)
 root.grid_columnconfigure(0, weight=1)
 root.grid_rowconfigure(0, weight=1)
+root.after(1000, update) #画面文字更新
 root.mainloop()
 
 # シリアルポートをクローズする
