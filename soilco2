@@ -1,0 +1,244 @@
+#python->UARTでSLT5006を動かす+CO2表示
+
+import serial
+import serial.tools.list_ports
+import time
+import tkinter as tk
+from tkinter import ttk
+import tkinter.font as f
+
+portflag=0
+co2portflag=1
+
+# シリアルポートを自動検出する関数
+def auto_detect_serial_port():
+	ports = list(serial.tools.list_ports.comports())
+	for p in ports:
+		print(p)
+		if 'USB Serial' in p.description:
+			global portflag
+			portflag=1
+			return p.device
+	return None
+
+"""
+#CO2用のシリアルポートを探す
+comf = open('co2port.txt')  # comf = open('co2port.txt', 'rt'):
+s = comf.read()  # ファイルの全内容が1つの文字列として返される
+print(s)
+comf.close()
+"""
+
+# シリアルポートをオープンする
+
+ser = serial.Serial(auto_detect_serial_port(), 9600, timeout=1)
+co2com='COM11'
+try:
+	serc = serial.Serial(co2com, 9600, timeout=1)#co2用
+except:
+	co2portflag=0
+	None
+	print('CO2シリアルポート無し')
+
+def com():
+	textport="COM PORT NOT OPEN"
+	if portflag==1:
+		textport="COM PORT OPEN"
+		return textport
+	return textport
+
+def co2():
+	if co2portflag==1:
+		rx= serc.readline()
+		print(*rx)
+		num=int(rx)
+		print(num)
+	else:
+		num=0
+	return num
+
+# ここでシリアル通信を行う
+
+val=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+temp=0
+VWC=0
+def repeat():
+
+	com1 = [ 0x02, 0x07, 0x01, 0x01, 0x0D, 0x70 ]
+	send1 = bytes(com1)
+	print(send1)
+
+	ser.write(send1)
+
+	ser.flush()
+	time.sleep(0.5)
+
+	rx = ser.readline()
+	print("rx: ", *rx)
+
+	time.sleep(0.5)
+
+	read = 0
+	count = 0
+	while read == 0:
+		com2 = [ 0x01, 0x08, 0x01, 0x00, 0xE6]
+		send1 = bytes(com2)
+		print(send1)
+
+		ser.write(send1)
+
+		ser.flush()
+		time.sleep(0.5)
+		rx = ser.readline()
+		print("rx: ", *rx)
+		if rx[3] == 1:
+			read = 1
+		count =count+1
+		if count==10:
+			break
+		time.sleep(0.5)
+
+	com3 = [ 0x01, 0x13, 0x10, 0xFC, 0x2C]
+	send1 = bytes(com3)
+	print(send1)
+
+	ser.write(send1)
+
+	ser.flush()
+	time.sleep(0.5)
+	global val
+	val = ser.readline()
+	print("rx: ", *val)
+	global temp
+	temp=(val[3]+val[4]*256)*0.0625
+	bulk=(val[5]+val[6]*256)*0.001
+	VWC=(val[9]+val[10]*256)*0.1
+	VWCR=(val[7]+val[8]*256)*0.1
+	VWCC=(val[11]+val[12]*256)*0.1
+	pore=(val[15]+val[16]*256)*0.001
+
+
+	print("temp",temp,"℃")
+	print("ECBulk",bulk,"dS/m")
+	print("VWCSoil",VWC,"%")
+	print("VWCRock",VWCR,"%")
+	print("VWCCoco",VWCC,"%")
+	print("ECPore",pore,"dS/m")
+
+	root.after(5000, repeat)
+
+
+#出力関数
+def tempx():
+	global val
+	t=(val[3]+val[4]*256)*0.0625
+	return t
+def vwcx():
+    global val
+    vv=(val[9]+val[10]*256)*0.1
+    return vv
+def porex():
+    global val
+    p=(val[15]+val[16]*256)*0.001
+    return p
+def bulkx():
+    global val
+    b=(val[5]+val[6]*256)*0.001
+    return b
+def vwcrx():
+    global val
+    vr=(val[7]+val[8]*256)*0.1
+    return vr
+def vwccx():
+    global val
+    vc=(val[11]+val[12]*256)*0.1
+    return vc
+
+#時刻
+def time_string():
+    return time.strftime('%H:%M:%S')
+
+#更新
+def update():
+    label.configure(text=time_string())
+    lab11.configure(text=round(tempx(),2))
+    lab21.configure(text=round(vwcx(),2))
+    lab31.configure(text=round(porex(),2))
+    lab41.configure(text=round(bulkx(),2))
+    lab51.configure(text=round(vwcrx(),2))
+    lab61.configure(text=round(vwccx(),2))
+    label9.configure(text=com())
+    lab71.configure(text=co2())
+    label.after(1000, update)
+
+#GUI
+root = tk.Tk()
+root.title("SoilSensor")
+root.geometry("1000x800")
+root["bg"] = "black"
+
+style = ttk.Style()
+style.configure('TLabel', background='black', foreground='white')
+
+font1 = f.Font(family="Lucida Console", weight="bold", size=50)
+"""
+label = ttk.Label(root, text=time_string(), font=font1)
+label.grid(row=0,column=0,columnspan=3)
+"""
+lab10 = ttk.Label(root, text="地温",font=font1)
+lab10.grid(row=1,column=0)
+lab20 = ttk.Label(root, text="体積水分率",font=font1)
+lab20.grid(row=2,column=0)
+lab30 = ttk.Label(root, text="間隙水EC",font=font1)
+lab30.grid(row=3,column=0)
+lab40 = ttk.Label(root, text="バルクEC",font=font1)
+lab40.grid(row=4,column=0)
+lab50 = ttk.Label(root, text="体積水分率(Rock)",font=font1)
+lab50.grid(row=5,column=0)
+lab60 = ttk.Label(root, text="体積水分率(Coco)",font=font1)
+lab60.grid(row=6,column=0)
+lab70 = ttk.Label(root, text="CO2濃度",font=font1)
+lab70.grid(row=7,column=0)
+
+lab11 = ttk.Label(root, text="--",font=font1)
+lab11.grid(row=1,column=1)
+lab21 = ttk.Label(root, text="--",font=font1)
+lab21.grid(row=2,column=1)
+lab31 = ttk.Label(root, text="--",font=font1)
+lab31.grid(row=3,column=1)
+lab41 = ttk.Label(root, text="--",font=font1)
+lab41.grid(row=4,column=1)
+lab51 = ttk.Label(root, text="--",font=font1)
+lab51.grid(row=5,column=1)
+lab61 = ttk.Label(root, text="--",font=font1)
+lab61.grid(row=6,column=1)
+lab71 = ttk.Label(root, text="--", font=font1)
+lab71.grid(row=7,column=1)
+
+lab12 = ttk.Label(root, text="℃",font=font1)
+lab12.grid(row=1,column=2)
+lab22 = ttk.Label(root, text="%",font=font1)
+lab22.grid(row=2,column=2)
+lab32 = ttk.Label(root, text="dS/m",font=font1)
+lab32.grid(row=3,column=2)
+lab42 = ttk.Label(root, text="dS/m",font=font1)
+lab42.grid(row=4,column=2)
+lab52 = ttk.Label(root, text="%",font=font1)
+lab52.grid(row=5,column=2)
+lab62 = ttk.Label(root, text="%",font=font1)
+lab62.grid(row=6,column=2)
+lab72 = ttk.Label(root, text="ppm",font=font1)
+lab72.grid(row=7,column=2)
+
+label9 = ttk.Label(root, text=com(), font=font1)
+label9.grid(row=9,column=0,columnspan=3)
+
+
+label.after(1000, update)
+label.after(1000, repeat)
+root.grid_columnconfigure(0, weight=1)
+root.grid_rowconfigure(0, weight=1)
+root.mainloop()
+
+# シリアルポートをクローズする
+ser.close()
